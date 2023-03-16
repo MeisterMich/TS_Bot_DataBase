@@ -79,11 +79,13 @@ def table_create(name, connection, dictionary):
                 parameters += f'{key} {dictionary.get(key)}, '
         except TypeError as error:
             logger.critical(f'{dictionary} is not dictionary!: {error}')
+            cur.close()
             return
         parameters = parameters[:(len(parameters)-2)]
         cur.execute(f'CREATE TABLE {name}({parameters});')
         connection.commit()
         logger.info(f'Table {name} created!\n')
+        cur.close()
     except AttributeError as error:
         con_type = type(connection)
         logger.critical(f'Received {con_type}. It is not connection!: {error}')
@@ -115,16 +117,18 @@ def entry_insert(name, connection, id, dictionary):
 
                 cur.execute(f"INSERT INTO {name}({parameters}) VALUES({id}, {values});")
                 logger.info('New entry_inserted!')
+                cur.close()
                 connection.commit()
             except TypeError as error:
                 logger.critical(f'Invalid input data!: {error}')
+                cur.close()
                 return
         except AttributeError as error:
             logger.critical(f'Received {type(connection)}. It is not connection!!: {error}')
             return
 
 
-def table_search(name, connection, id, dictionary):
+def table_search(name, connection, search):
     '''
     This function search needed entry
     in table. Function recieve name,
@@ -138,21 +142,63 @@ def table_search(name, connection, id, dictionary):
     try:
         cur = connection.cursor()
         try:
+                
+            if(isinstance(search, int)==True):
+                cur.execute(f"SELECT * FROM {name} WHERE id = {search};")
+                logger.info(cur.fetchall())
+                connection.commit()
+                cur.close()
+                return cur.fetchall()
+            else:
+                
                 parameters = ''
-                for key in dictionary:
-                    parameters += f'{key} = {dictionary.get(key)} AND '
+                for key in search:
+                        parameters += f"{key} = '{search.get(key)}' AND "
                 parameters = parameters[:(len(parameters)-4)]
 
                 cur.execute(f"SELECT * FROM {name} WHERE {parameters};")
-                print(cur.fetchall())
                 logger.info(cur.fetchall())
                 connection.commit()
+                cur.close()
                 return cur.fetchall()
         except TypeError as error:
                 logger.warning(f'Entry not found!: {error}')
                 cur.execute(f"SELECT * FROM {name};")
                 connection.commit()
+                cur.close()
                 return cur.fetchall()
     except AttributeError as error:
             logger.critical(f'Received {type(connection)}. It is not connection!: {error}')
             return
+
+
+def entry_delete(name, connection, id, dictionary):
+    '''
+    This function search delete entry
+    in table. Function recieve name,
+    connection, id dictionary with names
+    of fields and values. If connection wouldn't,
+    you will recieve message in terminal.
+    If you wouldn't enter the
+    dictionary, you will recieve message
+    in terminal.
+    '''
+    try:
+        cur = connection.cursor()
+        try:
+            parameters = ''
+            for key in dictionary:
+                parameters += f"{key} = '{dictionary.get(key)}' AND "
+            parameters = parameters[:(len(parameters)-4)]
+
+            cur.execute(f"DELETE FROM {name} WHERE id = {id} AND {parameters};")
+            logger.info('Entry deleted!')
+            connection.commit()
+            cur.close()
+        except TypeError as error:
+             logger.warning(f'Entry not found!: {error}')
+             cur.close()
+    except AttributeError as error:
+            logger.critical(f'Received {type(connection)}. It is not connection!: {error}')
+            return
+    
