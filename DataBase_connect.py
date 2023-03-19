@@ -202,3 +202,19 @@ def entry_delete(name, connection, id, dictionary):
             logger.critical(f'Received {type(connection)}. It is not connection!: {error}')
             return
     
+
+def db_disconnect(connection):
+    '''
+    This function is recieved connection
+    and disconnects from database. If it
+    is not connection, you will recieve
+    message in terminal.
+    '''
+    try:
+          connection.close()
+          logger.info('Disconnected successfully!\n')
+          return
+    except AttributeError as error:
+         logger.critical(f'Received {type(connection)}. It is not connection!: {error}')
+         return
+    
